@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - E-Learning V2</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-clients.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #4a6ee0 0%, #6a11cb 100%);
+            color: white;
+            padding: 40px 30px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .login-header::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .login-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+
+        .logo {
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .login-body {
+            padding: 30px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #666;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: #4a6ee0;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .step.completed {
+            background: #4cd964;
+            color: white;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 40px;
+            height: 2px;
+            background: #e0e0e0;
+            transform: translateY(-50%);
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .step-card {
+            display: none;
+        }
+
+        .step-card.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .class-option {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .class-option:hover {
+            transform: translateY(-2px);
+            border-color: #4a6ee0;
+        }
+
+        .class-option.selected {
+            background: #e8f0ff;
+            border-color: #4a6ee0;
+            box-shadow: 0 5px 15px rgba(74, 110, 224, 0.2);
+        }
+
+        .class-option .class-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 24px;
+        }
+
+        .class-option h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .class-option p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .users-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .user-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: background 0.3s ease;
+        }
+
+        .user-item:hover {
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .user-item.selected {
+            background: #e8f0ff;
+            border-radius: 8px;
+            border-left: 4px solid #4a6ee0;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .user-info h4 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .user-info p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .password-form {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4a6ee0;
+        }
+
+        .form-control.error {
+            border-color: #ff3b30;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .error-message {
+            color: #ff3b30;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4a6ee0 0%, #6a11cb 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(74, 110, 224, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4a6ee0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #eee;
+            background: #f8f9fa;
+        }
+
+        .footer a {
+            color: #4a6ee0;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .form-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .role-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <h1>E-Learning V2</h1>
+                <p>Platform Pembelajaran Digital</p>
+            </div>
+        </div>
+
+        <div class="login-body">
+            <div class="step-indicator">
+                <div class="step active" id="step1">1</div>
+                <div class="step" id="step2">2</div>
+                <div class="step" id="step3">3</div>
+            </div>
+
+            <!-- Step 1: Pilih Kategori -->
+            <div class="step-card active" id="stepCard1">
+                <div class="card-title">Pilih Kategori</div>
+                <div class="class-grid" id="classGrid">
+                    <!-- Class options will be loaded here -->
+                </div>
+                <button class="btn btn-primary" id="nextBtn1" disabled>
+                    Lanjut <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Step 2: Pilih Nama -->
+            <div class="step-card" id="stepCard2">
+                <div class="card-title">Pilih Nama Anda</div>
+                <div class="users-list" id="usersList">
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-spinner fa-spin"></i> Memuat data...
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" id="backBtn2">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </button>
+                    <button class="btn btn-primary" id="nextBtn2" disabled>
+                        Lanjut <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Masuk -->
+            <div class="step-card" id="stepCard3">
+                <div class="card-title">Masuk sebagai <span id="selectedUserName"></span></div>
+                <div class="password-form" id="passwordForm">
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="Masukkan password"
+                            autocomplete="current-password">
+                        <div class="error-message" id="passwordError">Password salah</div>
+                    </div>
+                    <button class="btn btn-primary" id="loginBtn">
+                        <i class="fas fa-sign-in-alt"></i> Masuk
+                    </button>
+                </div>
+                <div id="directLogin" style="display: none;">
+                    <div style="text-align: center; margin: 30px 0;">
+                        <h3 style="color: #4a6ee0; margin-bottom: 10px;">Halo, <span id="directUserName"></span>!</h3>
+                        <p style="color: #666; margin-bottom: 20px;">Ini beneran <b><span
+                                    id="directUserName2"></span></b>?<br>Ayo masuk!</p>
+                    </div>
+                    <button class="btn btn-primary" id="directLoginBtn">
+                        <i class="fas fa-door-open"></i> Masuk Sekarang
+                    </button>
+                </div>
+                <button class="btn btn-secondary" id="backBtn3">
+                    <i class="fas fa-arrow-left"></i> Pilih User Lain
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Ada masalah? <a href="https://wa.me/6281234567890" target="_blank">Hubungi Admin</a></p>
+            <p style="margin-top: 5px; font-size: 11px; opacity: 0.7;">© 2024 E-Learning V2</p>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let selectedCategory = null;
+        let selectedUser = null;
+        let usersData = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCategories();
+            setupEventListeners();
+
+            // Check if already logged in
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                redirectToDashboard();
+            }
+        });
+
+        // Load categories (kelas + admin)
+        async function loadCategories() {
+            try {
+                console.log('Loading categories...');
+
+                // Load classes from database
+                const { data: classes, error } = await window.supabase
+                    .from('classes')
+                    .select('*')
+                    .order('id');
+
+                if (error) throw error;
+
+                const classGrid = document.getElementById('classGrid');
+                classGrid.innerHTML = '';
+
+                // Tambah kategori Admin/Staff
+                const adminOption = document.createElement('div');
+                adminOption.className = 'class-option';
+                adminOption.dataset.id = 'admin';
+                adminOption.innerHTML = `
+                    <div class="class-icon" style="background: #ff4757; color: white;">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3>Admin/Staff</h3>
+                    <p>Super Admin & Class Admin</p>
+                `;
+                adminOption.addEventListener('click', () => selectCategory('admin', 'Admin/Staff'));
+                classGrid.appendChild(adminOption);
+
+                // Tambah kelas dari database
+                if (classes && classes.length > 0) {
+                    classes.forEach(cls => {
+                        const classOption = document.createElement('div');
+                        classOption.className = 'class-option';
+                        classOption.dataset.id = cls.id;
+                        classOption.innerHTML = `
+                            <div class="class-icon" style="background: #4a6ee0; color: white;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3>${cls.name}</h3>
+                            <p>Kelas ${cls.id}</p>
+                        `;
+
+                        classOption.addEventListener('click', () => selectCategory(cls.id, cls.name));
+                        classGrid.appendChild(classOption);
+                    });
+                } else {
+                    classGrid.innerHTML +=
+                        '<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #666;">Belum ada kelas yang dibuat</div>';
+                }
+
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                document.getElementById('classGrid').innerHTML =
+                    '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #ff3b30;">Error memuat data: ' + error.message + '</div>';
+            }
+        }
+
+        // Select category
+        function selectCategory(categoryId, categoryName) {
+            document.querySelectorAll('.class-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            const selectedOption = document.querySelector(`.class-option[data-id="${categoryId}"]`);
+            if (selectedOption) selectedOption.classList.add('selected');
+
+            selectedCategory = {
+                id: categoryId,
+                name: categoryName
+            };
+
+            document.getElementById('nextBtn1').disabled = false;
+        }
+
+        // Go to step 2
+        async function goToStep2() {
+            if (!selectedCategory) return;
+
+            updateSteps(2);
+
+            try {
+                console.log('Loading users for:', selectedCategory.id);
+
+                let query = window.supabase
+                    .from('users')
+                    .select('*')
+                    .order('short_name', { ascending: true });
+
+                // Filter berdasarkan kategori
+                if (selectedCategory.id === 'admin') {
+                    // Ambil admin users (super_admin dan class_admin)
+                    query = query.in('role', ['super_admin', 'class_admin']);
+                } else {
+                    // Ambil users di kelas tertentu (semua role di kelas itu)
+                    query = query.eq('class_id', selectedCategory.id);
+                }
+
+                const { data: users, error } = await query;
+
+                if (error) throw error;
+
+                usersData = users || [];
+                console.log('Users loaded:', usersData.length);
+                renderUsersList();
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersList').innerHTML =
+                    '<div style="text-align: center; padding: 40px; color: #ff3b30;">Error memuat data user: ' + error.message + '</div>';
+            }
+        }
+
+        // Render users list dengan role badge
+        function renderUsersList() {
+            const usersList = document.getElementById('usersList');
+
+            if (usersData.length === 0) {
+                usersList.innerHTML =
+                    '<div style="text-align: center; padding: 40px; color: #666;">Tidak ada user di kategori ini</div>';
+                return;
+            }
+
+            usersList.innerHTML = '';
+
+            usersData.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                userItem.dataset.id = user.id;
+
+                // Get first letter for avatar
+                const firstLetter = user.short_name
+                    ? user.short_name.charAt(0).toUpperCase()
+                    : (user.nickname ? user.nickname.charAt(0).toUpperCase() : '?');
+
+                // Tentukan warna avatar dan badge berdasarkan role
+                let avatarColor, roleBadge, roleText;
+
+                switch (user.role) {
+                    case 'super_admin':
+                        avatarColor = '#ff4757';
+                        roleBadge = 'SUPER ADMIN';
+                        roleText = '👑 Super Admin';
+                        break;
+                    case 'class_admin':
+                        avatarColor = '#ff9500';
+                        roleBadge = 'CLASS ADMIN';
+                        roleText = '👨‍🏫 Class Admin';
+                        break;
+                    case 'student':
+                        avatarColor = '#4a6ee0';
+                        roleBadge = 'SISWA';
+                        roleText = '👨‍🎓 Siswa';
+                        break;
+                    default:
+                        avatarColor = '#666';
+                        roleBadge = 'USER';
+                }
+
+                userItem.innerHTML = `
+                    <div class="user-avatar" style="background:${avatarColor}">${firstLetter}</div>
+                    <div class="user-info">
+                        <h4>
+                            ${user.short_name || user.full_name}
+                            <span class="role-badge" style="background:${avatarColor}">${roleBadge}</span>
+                        </h4>
+                        <p>@${user.nickname}${user.class_id ? ` • Kelas ${user.class_id}` : ''}</p>
+                    </div>
+                `;
+
+                userItem.addEventListener('click', () => selectUser(user));
+                usersList.appendChild(userItem);
+            });
+        }
+
+        // Select user
+        function selectUser(user) {
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            const selectedItem = document.querySelector(`.user-item[data-id="${user.id}"]`);
+            if (selectedItem) selectedItem.classList.add('selected');
+
+            selectedUser = user;
+            document.getElementById('nextBtn2').disabled = false;
+        }
+
+        // Go to step 3
+        function goToStep3() {
+            if (!selectedUser) return;
+
+            updateSteps(3);
+
+            // Update UI dengan nama user dan role
+            const displayName = selectedUser.short_name || selectedUser.nickname;
+            let roleText;
+
+            switch (selectedUser.role) {
+                case 'super_admin':
+                    roleText = '👑 Super Admin';
+                    break;
+                case 'class_admin':
+                    roleText = '👨‍🏫 Class Admin';
+                    break;
+                case 'student':
+                    roleText = '👨‍🎓 Siswa';
+                    break;
+                default:
+                    roleText = 'User';
+            }
+
+            document.getElementById('selectedUserName').innerHTML = `${displayName} <small style="color:#666; font-weight:normal;">(${roleText})</small>`;
+            document.getElementById('directUserName').textContent = displayName;
+            document.getElementById('directUserName2').textContent = displayName;
+
+            // Cek apakah user punya password
+            const hasPassword = selectedUser.password && selectedUser.password.trim() !== '';
+
+            if (hasPassword) {
+                // User punya password -> tampilkan form password
+                document.getElementById('passwordForm').style.display = 'block';
+                document.getElementById('directLogin').style.display = 'none';
+                document.getElementById('password').focus();
+            } else {
+                // User tidak punya password -> direct login
+                document.getElementById('passwordForm').style.display = 'none';
+                document.getElementById('directLogin').style.display = 'block';
+            }
+        }
+
+        // Login dengan password
+        async function login() {
+            const passwordInput = document.getElementById('password');
+            const passwordError = document.getElementById('passwordError');
+            const loginBtn = document.getElementById('loginBtn');
+
+            const password = passwordInput.value.trim();
+
+            // Reset error state
+            passwordInput.classList.remove('error');
+            passwordError.style.display = 'none';
+
+            // Show loading
+            const originalText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<span class="loading"></span> Memproses...';
+            loginBtn.disabled = true;
+
+            try {
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Check password
+                if (password === selectedUser.password) {
+                    // Login successful
+                    localStorage.setItem('user', JSON.stringify(selectedUser));
+                    redirectToDashboard();
+                } else {
+                    // Wrong password
+                    passwordInput.classList.add('error');
+                    passwordError.style.display = 'block';
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Terjadi kesalahan saat login');
+            } finally {
+                // Restore button
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+            }
+        }
+
+        // Direct login (without password)
+        function directLogin() {
+            localStorage.setItem('user', JSON.stringify(selectedUser));
+            redirectToDashboard();
+        }
+
+        // Redirect ke dashboard berdasarkan role
+        function redirectToDashboard() {
+            window.location.href = 'announcements.html';
+        }
+
+        // Update step indicators
+        function updateSteps(step) {
+            for (let i = 1; i <= 3; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                const card = document.getElementById(`stepCard${i}`);
+
+                if (i === step) {
+                    stepEl.classList.add('active');
+                    card.classList.add('active');
+                } else if (i < step) {
+                    stepEl.classList.remove('active');
+                    stepEl.classList.add('completed');
+                    card.classList.remove('active');
+                } else {
+                    stepEl.classList.remove('active', 'completed');
+                    card.classList.remove('active');
+                }
+            }
+
+            // Update button states
+            if (step === 1) {
+                selectedCategory = null;
+                selectedUser = null;
+                document.getElementById('nextBtn1').disabled = true;
+            } else if (step === 2) {
+                document.getElementById('nextBtn2').disabled = true;
+            }
+        }
+
+        // Go back to step 2
+        function goBackToStep2() {
+            updateSteps(2);
+            document.getElementById('password').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+        }
+
+        // Go back to step 1
+        function goBackToStep1() {
+            updateSteps(1);
+            selectedUser = null;
+            selectedCategory = null;
+            document.querySelectorAll('.class-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.getElementById('nextBtn1').disabled = true;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Step 1 buttons
+            document.getElementById('nextBtn1').addEventListener('click', goToStep2);
+
+            // Step 2 buttons
+            document.getElementById('backBtn2').addEventListener('click', goBackToStep1);
+            document.getElementById('nextBtn2').addEventListener('click', goToStep3);
+
+            // Step 3 buttons
+            document.getElementById('backBtn3').addEventListener('click', goBackToStep2);
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('directLoginBtn').addEventListener('click', directLogin);
+
+            // Enter key for password
+            document.getElementById('password').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
